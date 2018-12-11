@@ -8,7 +8,9 @@ output:
   word_document: default
 ---
 
-
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 ## New Zealand Election Study example R code
 
@@ -18,8 +20,7 @@ For this tutorial, I am assuming you are comfortable enough downloading data and
 
 ## Tutorial packages
 
-
-```r
+```{r libraries, warning=FALSE, message=FALSE}
 library(foreign)
 # all the rest of the libraries are for analysis after reading in the data
 library(dplyr)
@@ -27,7 +28,7 @@ library(ggplot2)
 library(knitr)
 ```
 
-Note: The recent (as of writing) foreign package had some enhancements in the underlying libraries that make it much easier to read in these SPSS files compared to older versions. I am using version 0.8.69.
+Note: The recent (as of writing) foreign package had some enhancements in the underlying libraries that make it much easier to read in these SPSS files compared to older versions. I am using version `r packageVersion("foreign")`.
 
 I am also loading dplyr and ggplot2, for use in showing some example analysis and knitr for making a table. These packages do not need to be loaded for reading in the data.
 
@@ -38,8 +39,7 @@ For each data file, I am using read.spss() from the "foreign" package, wrapped u
 As well as data file, from the data I am creating a meta file, containing the variable names and descriptions of the data. This is to make it easier to check the subject of each column in the data.
 
 
-
-```r
+```{r es2014}
 sav14 <- suppressWarnings(read.spss("NZES2014GeneralReleaseApril16.sav",
                     to.data.frame = TRUE, add.undeclared.levels = "sort"))
 meta14 <- data.frame(varnames = attributes(sav14)$names,
@@ -71,8 +71,7 @@ For those in the survey in 2014 who gave age and which party (of the four main p
 * check the metadata to find the appropriate columns
 * reduce the data to the relevant entries
 
-
-```r
+```{r, warning=FALSE, message=FALSE}
 sav14 %>%
   # entries with age that voted for a party of interest
   filter(!is.na(dage),
@@ -84,8 +83,6 @@ sav14 %>%
   xlab("Age") + ylab("proportion of voters")
 ```
 
-![](README_files/figure-html/unnamed-chunk-1-1.png)<!-- -->
-
 ## Example Two
 
 Doing some exploratory graph making people are placing National at 0, the most left possible on the left right political spectrum. It would be highly unusual to truly consider National to the left of Labour, so it might be worth considering if this is a kind of answer that is specific to a group, such as an age group. To tackle this:
@@ -96,36 +93,16 @@ Doing some exploratory graph making people are placing National at 0, the most l
 
 Examining one of the left/right variables to get a sense of the factor levels:
 
-
-```r
+```{r}
 sav14 %>%
   mutate(label=dlablr) %>%
   group_by(label) %>%
   summarise(ordinal=as.numeric(dlablr)[1]) %>% kable()
 ```
 
-
-
-label         ordinal
------------  --------
-Left                1
-1                   2
-2                   3
-3                   4
-4                   5
-Centre              6
-6                   7
-7                   8
-8                   9
-9                  10
-Right              11
-Don't know         12
-NA                 NA
-
 In theory it would be possible to make a conversion on the basis of the numeric ordinal component of the factor, however if a party lacks responses for a particular option the numeric levels would not know about the missing ordinal values, so it is best to do the conversion based on the text
 
-
-```r
+```{r, warning=FALSE, message=FALSE}
 sav14 %>%
   # relevant columns to select known from reading metadata
   # convert to numeric
@@ -149,8 +126,6 @@ sav14 %>%
   ggtitle("NZES 2014: number of responses placing National left of Labour") + xlab("Age of respondent")
 ```
 
-![](README_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
-
 ## Example Three
 
 To show working with more than one of the data sets at once, I decide to examine how the Green voter age distribution has changed at each election. This involves:
@@ -159,8 +134,7 @@ To show working with more than one of the data sets at once, I decide to examine
 * Standardize column names
 * Combine the individual data sets into one
 
-
-```r
+```{r, warning=FALSE, message=FALSE}
 # make one dataset of data prepared on the fly
 bind_rows(sav14 %>%
   filter(!is.na(dage), dpartyvote == "Green") %>% select(age = dage) %>%
@@ -180,7 +154,5 @@ bind_rows(sav14 %>%
   scale_colour_viridis_d() +
   xlab("Age") + ylab("proportion of voters")
 ```
-
-![](README_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 
 
